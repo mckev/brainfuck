@@ -11,16 +11,15 @@
 
 class CPU {
 
-	typedef int cells_t;
-
 private:
 	// code
 	std::string code;
-	unsigned int code_pointer;
-	std::stack<int> loop_pointers;
-	// cells
-	std::vector<cells_t> cells;
-	unsigned int cells_pointer;
+	unsigned int code_ptr;
+	std::stack<unsigned int> loop_ptrs;
+	// memory (cells)
+	typedef int cell_t;
+	std::vector<cell_t> cells;
+	unsigned int cell_ptr;
 
 public:
 	CPU() {
@@ -31,10 +30,10 @@ public:
 
 	void reset() {
 		code = {};
-		code_pointer = 0;
-		loop_pointers = {};
-		cells = std::vector<cells_t>(30000);
-		cells_pointer = 0;
+		code_ptr = 0;
+		loop_ptrs = {};
+		cells = std::vector<cell_t>(30000);
+		cell_ptr = 0;
 	}
 
 	void set_code(const std::string& _code) {
@@ -43,35 +42,35 @@ public:
 	}
 
 	void run() {
-		code_pointer = 0;
-		while (code_pointer < code.length()) {
-			switch (code.at(code_pointer)) {
+		code_ptr = 0;
+		while (code_ptr < code.length()) {
+			switch (code.at(code_ptr)) {
 				case '>':
-					cells_pointer++;
+					cell_ptr++;
 					break;
 				case '<':
-					cells_pointer--;
+					cell_ptr--;
 					break;
 				case '+':
-					cells.at(cells_pointer)++;
+					cells.at(cell_ptr)++;
 					break;
 				case '-':
-					cells.at(cells_pointer)--;
+					cells.at(cell_ptr)--;
 					break;
 				case '.':
-					std::cout << (char) cells.at(cells_pointer);
+					std::cout << (char) cells.at(cell_ptr);
 					break;
 				case ',':
-					cells.at(cells_pointer) = std::getc(stdin);
+					cells.at(cell_ptr) = std::getc(stdin);
 					break;
 				case '[':
-					if (cells.at(cells_pointer) > 0) {
-						loop_pointers.push(code_pointer);
+					if (cells.at(cell_ptr) > 0) {
+						loop_ptrs.push(code_ptr);
 					} else {
-						// Special case: If the cells[cells_pointer] is zero, then go to the next matching ']'
+						// Special case: If the cells[cell_ptr] is zero, then go to the next matching ']'
 						int num_bracket = 0;
 						do {
-							switch (code.at(code_pointer)) {
+							switch (code.at(code_ptr)) {
 								case '[':
 									num_bracket++;
 									break;
@@ -79,25 +78,25 @@ public:
 									num_bracket--;
 									break;
 							}
-							code_pointer++;
+							code_ptr++;
 						} while (num_bracket > 0);
-						code_pointer--;
+						code_ptr--;
 					}
 					break;
 				case ']':
-					if (cells.at(cells_pointer) > 0) {
+					if (cells.at(cell_ptr) > 0) {
 						// Make a loop
-						code_pointer = loop_pointers.top();
+						code_ptr = loop_ptrs.top();
 					} else {
-						// We have reached the end of the loop. Destroy the loop stack and continue to the next instruction.
-						loop_pointers.pop();
+						// We have reached the end of the loop
+						loop_ptrs.pop();
 					}
 					break;
 				default:
 					// Ignore unrecognized characters
 					break;
 			}
-			code_pointer++;
+			code_ptr++;
 		}
 	}
 };
@@ -117,9 +116,8 @@ int main() {
 	cpu.run();
 
 	// Ref: https://esolangs.org/wiki/Brainfuck
-	std::string code_determine_cells_type = \
+	std::string code_determine_cell_type = \
 		"This program outputs the cell width of the interpreter                     "\
-		"Ref: https://esolangs org/wiki/Brainfuck                                   "\
 		"Calculate the value 256 and test if it's zero                              "\
 		"If the interpreter errors on overflow this is where it'll happen           "\
 		"++++++++[>++++++++<-]>[<++++>-]                                            "\
@@ -141,7 +139,7 @@ int main() {
 		">>.++.+++++++..<-.>>-                                                      "\
 		"Clean up used cells                                                        "\
 		"[[-]<]                                                                     ";
-	cpu.set_code(code_determine_cells_type);
+	cpu.set_code(code_determine_cell_type);
 	cpu.run();
 	std::cout << std::endl;
 
@@ -194,6 +192,7 @@ int main() {
 	std::string code_reverse_string = "+[->,----------]<[+++++++++++.<]";
 	cpu.set_code(code_reverse_string);
 	cpu.run();
+	std::cout << std::endl;
 
 	return 0;
 }
